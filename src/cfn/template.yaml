@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: This template deploys the Amazon Rekognition Virtual Proctor (uksb-1qoed5fri)
+Description: Deploy the cloud for crime detction & gun violence (uksb-1qoed5fri)
 Transform: AWS::Serverless-2016-10-31
 
 Globals:
@@ -72,15 +72,13 @@ Parameters:
     Default: "Mobile Phone,Cell Phone"
   PreBuiltArtefactsBucketOverride:
     Description: >
-      The name of an S3 Bucket containing the built web-ui.
-      Use this to deploy a modified version of the Virtual Proctor web ui. 
-      The default is to use the Virtual Proctor version from a predefined bucket in the given region (for example solution-builders-us-west-1)
-    Type: String
+      The name of an S3 Bucket containing the built web-ui or add your own.
+      Type: String
     Default: "false"
   ResourcePrefix:
     Description: AWS Resources are named based on the value of this parameter. You must customise this if you are launching more than one instance of the stack within the same account.
     Type: String
-    Default: VirtualProctor
+    Default: ViolenceDetection
     AllowedPattern: ^[a-zA-Z0-9_]*$
   CreateCloudFrontDistribution:
     Description: Creates a CloudFront distribution for accessing the web interface of the demo. This must be enabled if S3 Block Public Access is enabled at an account level.
@@ -98,13 +96,13 @@ Conditions:
 Outputs:
   api:
     Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
-    Description: Virtual Proctor API
+    Description: Violence Detection API
   url:
     Value: !If 
       - WithCloudFront
       - !Sub 'https://${CloudFrontDistribution.DomainName}'
       - !Sub 'https://${WebUIBucket.RegionalDomainName}/index.html'
-    Description: Virtual Proctor URL
+    Description: Violence Detection URL
 Resources:
 
   SetupRekognitionAndWebUI:
@@ -169,10 +167,10 @@ Resources:
         AllowAdminCreateUserOnly: true
         InviteMessageTemplate:
           EmailMessage: !Sub
-            - 'Your Amazon Rekognition Virtual Proctor username is {username} and the temporary password is {####}<br><br>Click here to access the web interface: <a href="${UIUrl}">${UIUrl}</a>'
+            - 'Your Violence Detection App username is {username} and the temporary password is {####}<br><br>Click here to access the web interface: <a href="${UIUrl}">${UIUrl}</a>'
             - { UIUrl: !If [WithCloudFront, !Sub 'https://${CloudFrontDistribution.DomainName}', !Sub 'https://${WebUIBucket.RegionalDomainName}/index.html'] }
           EmailSubject: 'Your temporary password for Amazon Rekognition Virtual Proctor'
-          SMSMessage: 'Your Amazon Rekognition Virtual Proctor username is {username} and the temporary password is {####}'
+          SMSMessage: 'Your Violence Detection App username is {username} and the temporary password is {####}'
       AutoVerifiedAttributes:
         - email
       Policies:
@@ -261,7 +259,7 @@ Resources:
     Properties:
       Handler: index.handler
       CodeUri: ../backend/functions/setup/
-      Description: Custom Lambda resource for the Virtual Proctor Cloudformation Stack
+      Description: Custom Lambda resource for the Violence Detection Cloudformation Stack
       Environment:
         Variables:
           API_GATEWAY: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
